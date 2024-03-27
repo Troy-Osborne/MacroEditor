@@ -1,0 +1,236 @@
+
+<script>
+Typing=true;
+LToggle=false;
+RToggle=false;
+selectStart=0;
+selectEnd=0;
+//Menu Functions
+function SaveFile(name){
+CentreDialogue(`<a download='${name}'>`);
+}
+</script>
+
+<style>
+
+img.top{height:8vh; width:8h;}
+/* Tooltip container */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptexttop {
+  visibility: hidden;
+  min-width: 164px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+top:48px;
+left:-40px;
+  z-index: 1;
+}
+
+
+/* Tooltip text */
+.tooltip .tooltiptextbottom{
+  visibility: hidden;
+  min-width: 164px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+top:-36px;
+left:-40px;
+  z-index: 1;
+}
+
+.tooltip .tooltiptextright {
+  visibility: hidden;
+  max-width: 64px;
+  background-color: black;
+color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+top:0px;
+left:164px;
+  z-index: 1;
+}
+
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptextright, .tooltip:hover .tooltiptexttop,  .tooltip:hover .tooltiptextbottom{
+  visibility: visible;
+}
+</style>
+
+<style>
+#topbar{width:100vw;height:10vh;background:#EFEFEF;border-top:1px #000 solid; padding-left:10vh; vertical-align:top;}
+h1{vertical-align:top; margin-top:8px;}
+#middle{width:100vw;height:78vh;background:#DDD;border:1px #000 solid;}
+#bottombar{width:100vw;height:10vh;background:#ccc;border-bottom:1px #000 solid; padding-left:10vh;}
+#macrolist{width:30vw;height:100%;overflow-y: scroll;}
+#editor{width:69%;height:100%;border-bottom-right-radius:min(64px,12vw);overflow:hidden;}
+textarea{width:100%;height:100%}
+div{display:inline-block;vertical-align:top;}
+.bar{width:100%;height:15%;}
+button{vertical-align:top;width:100%;height:100%;}
+.buttoncontainer{display:inline-block;max-width:10vw;min-height:10vw;}
+body{margin:0; overflow:hidden;}
+</style>
+<div id=topbar><h1 style="display:inline-block">Macro Editor</h1>
+<script>
+function editorClick()
+{
+        var ctl = document.getElementById('texteditor');
+        selectStart=ctl.selectionStart;
+        selectEnd=ctl.selectionEnd;
+}
+
+function menubutton(name,icon){
+document.write("<div class=\"tooltip\"><button> <img onerror=\"this.onerror=null; this.src='Icons/404.jpg'\"  class=top src='Icons/"+icon+"'> </button>  <span class=\"tooltiptexttop\">"+name+"</span></div>") ;}
+
+menubutton("New","Doc.jpg");
+menubutton("Save","Save File.jpg");
+menubutton("Backup","Duplicate Hotbar.jpg");
+menubutton("Open","Open.jpg");
+menubutton("Add Hotbar","AddHotBar.jpg");
+menubutton("Delete Hotbar","RobotAngry.jpg");
+menubutton("Add Macro","Complex7.jpg");
+menubutton("Duplicate Macro","Duplicate Macro.jpg");
+menubutton("Import Macro","Import Macro.jpg");
+menubutton("Export Macro","Export Macro.jpg");
+menubutton("Delete Macro","Shredder.jpg");
+menubutton("Store Config","Settings.jpg");
+</script>
+</div>
+<div id=middle>
+<div id=macrolist>
+</div>
+<div id=editor>
+<textarea id=texteditor onclick='editorClick()'>
+</textarea>
+</div></div>
+<div id=bottombar></div>
+
+<script type="text/javascript" src="formMacros.js"></script>
+<script type="text/javascript" src="domMacros.js"></script>
+<script type="text/javascript" src="phpMacros.js"></script>
+<script type="text/javascript" src="datatypeMacros.js"></script>
+<script type="text/javascript" src="mysqlMacros.js"></script>
+
+<script>
+bars=[['D',datatype_macros],['F',form_macros],['P',PHP_macros],['D',javascript_DOM_macros],['M',mysqli_macros],['S',mysql_macros]];
+currentbar=0;
+
+function getArgNames(func){
+return func.toString()
+    .match(/\(([^)]*)\)/)[1]
+    .split(',')
+    .map(function(arg) {
+        return arg.trim();
+    });}
+
+
+function runMacro(position){
+var M=bars[currentbar][1][2][position];
+arity=M[3];
+func=M[4];
+args=[];
+argnames=getArgNames(func);
+//Get Arg Names
+for (currentarg=1; currentarg<=arity; currentarg++){
+argname=argnames[currentarg-1];
+//Get Input Value From User String
+ArgValue=prompt(M[0]+`: Argument ${currentarg} (${argname})`);
+
+args.push(ArgValue);
+}
+result=func.apply(null,args);
+writetodoc(result);
+}
+
+function writetodoc(texttowrite){ //Write in the message box at the last cursor pos before the button was clicked
+//Check if the Text contains {CURPOS}
+var curposintext=false;
+
+// if curpos intext string length is length until curpos else it's total length
+var stringlength=texttowrite.length;
+
+if (selectStart==selectEnd){
+var editor=document.getElementById('texteditor');
+//Old Version editor.value=editor.value+texttowrite; 
+editor.value=editor.value.substr(0,selectStart)+texttowrite+editor.value.substr(selectStart,editor.value.length-selectStart);
+//if {CURPOS} is in the text and Rtoggle and L toggle are both disables
+//then set the current cursor position forward to the {CURPOS} point
+
+//if curpos isn't in the text or if the Rtoggle is enabled
+//Set Cursor Pos to end;
+if (RToggle || (!(LToggle) && !(curposintext))){ 
+  selectStart=selectStart+stringlength;
+  selectEnd=selectStart;
+}
+
+
+if (Ltoggle){
+//keep cursor pos the same
+}
+//Leave Cursor Pos at beginning
+}
+}
+
+function populatelist(macros){
+	//get macrolist
+	outstr="";
+	ml=document.getElementById('macrolist');
+	for (pos=0;pos<macros.length;pos++){
+	crnt=macros[pos];
+	name=crnt[0];
+	icon=crnt[1];
+	hotkey=crnt[2];
+	arity=crnt[3];
+		outstr+="<div class=bar onclick='runMacro("+pos+")'><div class=\"tooltip\">"+name+"["+arity+" args] <img onerror=\"this.onerror=null; this.src='Icons/404.jpg'\"  class=top src='Icons/"+icon+"'> </button>  <span class=\"tooltiptextright\">hotkey :"+hotkey+" </span></div></div>";
+	}
+	ml.innerHTML=outstr;
+	}
+
+
+
+function bottomicon(Hotbar,num){
+var key=Hotbar[0];
+var data=Hotbar[1];
+var name=data[0];
+var icon=data[1];
+var contents=data[2]
+
+return "<div class=\"tooltip\"><button onclick=\"changebar("+num+")\"> <img onerror=\"this.onerror=null; this.src='Icons/404.jpg'\" class=top src='Icons/"+icon+"'> </button>  <span class=\"tooltiptextbottom\">"+name+" ("+key+")</span></div>" ;}
+
+function populatehotbars(hotbars){
+	//get bottombar
+	outstr="";
+	bb=document.getElementById('bottombar');
+	for (pos=0;pos<hotbars.length;pos++){
+		outstr+=bottomicon(hotbars[pos],pos);
+	}
+	bb.innerHTML=outstr;
+	}
+
+function changebar(barnumber){
+populatelist(bars[barnumber][1][2]);
+currentbar=barnumber;
+}
+populatehotbars(bars);
+populatelist(datatype_macros[2]);
+</script>
