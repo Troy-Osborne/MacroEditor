@@ -1,14 +1,117 @@
 
+
 <script>
+function MacroFromKey(event){
+var MacroList=bars[currentbar][1][2];
+for (pos=0;pos<MacroList.length;pos++){
+	if (bars[currentbar][1][2][pos][2].toLowerCase() == event.key){ runMacro(pos); return 1;}
+}
+return 0;
+}
+
+function HotbarFromKey(event){
+for (pos=0;pos<bars.length;pos++){
+	if (bars[pos][0].toLowerCase() == event.key){ changebar(pos); return 1;}
+}
+//If Not Returned By now then there's no corrosponding hotkey
+return 0;
+}
+
+function isModifier(Key){
+if ((Key=='Control') || (Key=='Shift') || (Key=='Alt')){
+	return true;
+}
+else{
+	return false;
+}}
+
+function handleModifier(event,Direction){
+isDown=Direction=="Down";
+Side=event.location;
+if (Side===1){//left
+if (event.key=='Control'){LC=isDown;}
+if (event.key=='Shift'){LS=isDown;}
+if (event.key=='Alt'){LA=isDown;event.preventDefault()}
+}
+if (Side===2){//right
+if (event.key=='Control'){RC=isDown;}
+if (event.key=='Shift'){RS=isDown;}
+if (event.key=='Alt'){RA=isDown;event.preventDefault()}
+}
+return 1;
+}
+
+// Event handler for keydown event
+function handleKeyDown(event) {
+if (event.repeat) {
+//ignore if repeat
+}
+else {
+	if (isModifier(event.key)){
+		handleModifier(event,"Down");
+	}
+	else
+	{
+		if (LA){MacroFromKey(event);event.preventDefault();}//Left-Alt to use a macro from the active hotbar
+		if (RA){HotbarFromKey(event);event.preventDefault();}//Right-Alt to change hotbar
+	}
+    console.log('Key Down:', event.key);
+}}
+
+// Event handler for keyup event
+function handleKeyUp(event) {
+	if (isModifier(event.key)){
+		handleModifier(event,"Up");
+	}
+    console.log('Key Up:', event.key);
+}
+
+
+
+// Attach event listeners to the document
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
+
+
 Typing=true;
 LToggle=false;
 RToggle=false;
+Modified=false;
 selectStart=0;
 selectEnd=0;
+
+
+
 //Menu Functions
-function SaveFile(name){
-CentreDialogue(`<a download='${name}'>`);
+//New File
+
+function ClearEditor(){
+	var ctl = document.getElementById('texteditor');
+	ctl.value="";
+	selectStart=0;
+	selectEnd=0;
 }
+
+function NewFile(){
+if (Modified)
+{
+	var Save=confirm("File Modified! Save?");//Yes No Prompt
+}
+else 
+{
+	ClearEditor();
+}
+}
+
+function SaveFile(name){
+CentreDialogue(`<a download='${name}'>Save to Computer</a>`);
+}
+
+function BackupFile(name){
+CentreDialogue(`<a download='${name}backup'>Download Backup</a>`);
+}
+
+
 </script>
 
 <style>
@@ -99,13 +202,13 @@ function editorClick()
         selectEnd=ctl.selectionEnd;
 }
 
-function menubutton(name,icon){
-document.write("<div class=\"tooltip\"><button> <img onerror=\"this.onerror=null; this.src='Icons/404.jpg'\"  class=top src='Icons/"+icon+"'> </button>  <span class=\"tooltiptexttop\">"+name+"</span></div>") ;}
+function menubutton(name,icon,buttonmethod){
+document.write("<div class=\"tooltip\"><button onclick="+buttonmethod+"> <img onerror=\"this.onerror=null; this.src='Icons/404.jpg'\"  class=top src='Icons/"+icon+"'> </button>  <span class=\"tooltiptexttop\">"+name+"</span></div>") ;}
 
-menubutton("New","Doc.jpg");
-menubutton("Save","Save File.jpg");
-menubutton("Backup","Duplicate Hotbar.jpg");
-menubutton("Open","Open.jpg");
+menubutton("New","Doc.jpg","NewFile()");
+menubutton("Save","Save File.jpg","SaveFile()");
+menubutton("Backup","Duplicate Hotbar.jpg","BackupFile()");
+menubutton("Open","Open.jpg","OpenFile()");
 menubutton("Add Hotbar","AddHotBar.jpg");
 menubutton("Delete Hotbar","RobotAngry.jpg");
 menubutton("Add Macro","Complex7.jpg");
@@ -132,7 +235,7 @@ menubutton("Store Config","Settings.jpg");
 <script type="text/javascript" src="mysqlMacros.js"></script>
 
 <script>
-bars=[['D',datatype_macros],['F',form_macros],['P',PHP_macros],['D',javascript_DOM_macros],['M',mysqli_macros],['S',mysql_macros]];
+bars=[['T',datatype_macros],['F',form_macros],['P',PHP_macros],['D',javascript_DOM_macros],['M',mysqli_macros],['S',mysql_macros]];
 currentbar=0;
 
 function getArgNames(func){
@@ -201,7 +304,7 @@ function populatelist(macros){
 	icon=crnt[1];
 	hotkey=crnt[2];
 	arity=crnt[3];
-		outstr+="<div class=bar onclick='runMacro("+pos+")'><div class=\"tooltip\">"+name+"["+arity+" args] <img onerror=\"this.onerror=null; this.src='Icons/404.jpg'\"  class=top src='Icons/"+icon+"'> </button>  <span class=\"tooltiptextright\">hotkey :"+hotkey+" </span></div></div>";
+		outstr+="<div class=bar onclick='runMacro("+pos+")'><div class=\"tooltip\">"+name+"("+hotkey+")["+arity+" args] <img onerror=\"this.onerror=null; this.src='Icons/404.jpg'\"  class=top src='Icons/"+icon+"'> </button>  <span class=\"tooltiptextright\">hotkey :"+hotkey+" </span></div></div>";
 	}
 	ml.innerHTML=outstr;
 	}
