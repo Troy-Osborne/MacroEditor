@@ -1,6 +1,17 @@
+<!DOCTYPE html>
+<script src='InputsJS.js'> 
+</script>
 
+<head>
+<script> 
+document.write(UIJSInitialiseCSS());
+</script>
+</head>
 
 <script>
+LS=false;RS=false;
+LC=false;RC=false;
+LA=false;RA=false;
 function MacroFromKey(event){
 var MacroList=bars[currentbar][1][2];
 for (pos=0;pos<MacroList.length;pos++){
@@ -227,6 +238,9 @@ menubutton("Store Config","Settings.jpg");
 </textarea>
 </div></div>
 <div id=bottombar></div>
+<div id=UserInputJS>
+
+</div>
 
 <script type="text/javascript" src="formMacros.js"></script>
 <script type="text/javascript" src="domMacros.js"></script>
@@ -247,7 +261,7 @@ return func.toString()
     });}
 
 
-function runMacro(position){
+function runMacroOld(position){
 var M=bars[currentbar][1][2][position];
 arity=M[3];
 func=M[4];
@@ -263,6 +277,29 @@ args.push(ArgValue);
 }
 result=func.apply(null,args);
 writetodoc(result);
+}
+
+function runMacro(position){
+M=bars[currentbar][1][2][position];
+arity=M[3];
+func=M[4];
+var argnames=getArgNames(func);
+var argtypes=[];
+var defaults=[];
+var pf= function (args) {writetodoc(func.apply(null,args));}
+//Get Arg Names
+for (currentarg=1; currentarg<=arity; currentarg++){
+argname=argnames[currentarg-1];
+argtypes.push("text");
+defaults.push("");
+}
+if (arity==0){
+writetodoc(func.apply(null,[]))
+}
+else
+{
+CustomInput(M[0], argtypes, defaults, argnames, "", "Submit", argnames, pf);
+}
 }
 
 function writetodoc(texttowrite){ //Write in the message box at the last cursor pos before the button was clicked
